@@ -4,7 +4,8 @@ const cTable = require('console.table');
 const chalk = require('chalk');
 const clear = require('clear');
 const figlet = require('figlet');
-
+let roles = require('./lib/role');
+let managers = require('./lib/manager');
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -13,6 +14,7 @@ const connection = mysql.createConnection({
     password: 'mypassword1122',
     database: 'employeeTracker_DB',
 });
+
 
 const start = () => {
     clear();
@@ -83,6 +85,7 @@ const start = () => {
 
 const viewAll = () => {
     console.log("------------------------------------------");
+    console.log(roles);
     connection.query(`SELECT 
     e.id,
     CONCAT(e.first_name, ' ', e.last_name) AS 'Employee Name',
@@ -197,6 +200,8 @@ const viewAllManager = () => {
 };
 
 const addEmployee = () => {
+    let newRoles = roles.map((role) => ({ name: role.role, value: role.roleId }));
+    let newManager = managers.map((managers) => ({ name: managers.name, value: managers.managerId }));
     inquirer
         .prompt([{
                 name: 'firstName',
@@ -224,31 +229,15 @@ const addEmployee = () => {
             },
             {
                 name: 'role',
-                type: 'choices',
+                type: 'list',
                 message: "What is the employee's role?",
-                choices: [
-                    "Lead Engineer",
-                    "Legal Team Lead",
-                    "Accountant",
-                    "Sales Lead",
-                    "Salesperson",
-                    "Software Engineer",
-                    "Lawyer",
-                    "Compensation",
-                    "Employee Relations",
-                    "Marketing Strategist Lead",
-                    "Social Media Lead",
-                    "Customer Support",
-                ]
+                choices: newRoles,
             },
             {
                 name: 'manager',
+                type: 'list',
                 message: "Who is the employee's manager?",
-                choices: [
-                    "John Doe",
-                    "Mike Hunt",
-                    "Cathy Beach"
-                ]
+                choices: newManager,
             }
         ]).then((answer) => {
             connection.query(
@@ -259,7 +248,6 @@ const addEmployee = () => {
                     role_id: answer.role,
                     manager_id: answer.manager,
                 },
-                
                 (err, res) => {
                     if (err) throw err;
                     let data = res
