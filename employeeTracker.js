@@ -200,8 +200,14 @@ const viewAllManager = () => {
 };
 
 const addEmployee = () => {
-    let newRoles = roles.map((role) => ({ name: role.role, value: role.roleId }));
-    let newManager = managers.map((managers) => ({ name: managers.name, value: managers.managerId }));
+    let newRoles = roles.map((role) => ({
+        name: role.role,
+        value: role.roleId
+    }));
+    let newManager = managers.map((managers) => ({
+        name: managers.name,
+        value: managers.managerId
+    }));
     inquirer
         .prompt([{
                 name: 'firstName',
@@ -241,8 +247,7 @@ const addEmployee = () => {
             }
         ]).then((answer) => {
             connection.query(
-                'INSERT INTO employee SET ?',
-                {
+                'INSERT INTO employee SET ?', {
                     first_name: answer.firstName,
                     last_name: answer.lastName,
                     role_id: answer.role,
@@ -276,7 +281,46 @@ const addEmployee = () => {
 };
 
 const removeEmployee = () => {
-
+    connection.query("SELECT * FROM employee", (err, employees) => {
+        if (err) throw err;
+        let removeEmployee = employees.map((employee) => ({
+            name: `${employee.first_name} ${employee.last_name}`,
+            value: employee.id,
+        }));
+        inquirer
+            .prompt([{
+                name: 'remove',
+                type: 'list',
+                message: "Which employee would you like to remove?",
+                choices: removeEmployee,
+            }, ]).then((answer) => {
+                connection.query("DELETE FROM employee WHERE ?", {
+                        id: answer.remove,
+                    },
+                    (err, res) => {
+                        if (err) throw err;
+                        console.log(`${res.affectedRows} employee deleted!\n`);
+                        inquirer.prompt([{
+                            type: "list",
+                            name: "choices",
+                            message: "Would you like to go back to the main menu or exit?",
+                            choices: [
+                                "Main Menu",
+                                "Exit",
+                            ]
+                        }]).then(data => {
+                            switch (data.choices) {
+                                case "Main Menu":
+                                    start();
+                                    break;
+                                case "Exit":
+                                    connection.end();
+                                    break;
+                            }
+                        })
+                    })
+            })
+    })
 };
 
 const updateEmployeeRole = () => {
