@@ -255,8 +255,7 @@ const addEmployee = () => {
                 },
                 (err, res) => {
                     if (err) throw err;
-                    let data = res
-                    console.table(data);
+                    console.log(`${res.affectedRows} employee added!\n`);
                     inquirer.prompt([{
                         type: "list",
                         name: "choices",
@@ -385,8 +384,6 @@ const updateEmployeeRole = () => {
     })
 }
 
-
-
 const updateEmployeeManager = () => {
     connection.query("SELECT * FROM employee", (err, employees) => {
         if (err) throw err;
@@ -413,8 +410,7 @@ const updateEmployeeManager = () => {
                 },
             ]).then((answer) => {
                 connection.query("UPDATE employee SET ? WHERE ?",
-                        [
-                        {
+                    [{
                             manager_id: answer.manager,
                         },
                         {
@@ -423,7 +419,7 @@ const updateEmployeeManager = () => {
                     ],
                     (err, res) => {
                         if (err) throw err;
-                        console.log(`${res.affectedRows} employee updated!\n`);
+                        console.log(`${res.affectedRows} employee manager updated!\n`);
                         inquirer.prompt([{
                             type: "list",
                             name: "choices",
@@ -475,13 +471,106 @@ const viewAllRoles = () => {
 };
 
 const addRoles = () => {
-
+    connection.query("SELECT * FROM department", (err, departments) => {
+        if (err) throw err;
+        let addInDepartment = departments.map((department) => ({
+            name: department.name,
+            value: department.departmentId,
+        }));
+        inquirer
+            .prompt([{
+                    name: 'role',
+                    type: 'input',
+                    message: "Please provide the new role you would like to add.",
+                },
+                {
+                    name: 'salary',
+                    type: 'input',
+                    message: "Please provide a salary to go with the new role.",
+                },
+                {
+                    name: 'department',
+                    type: 'list',
+                    message: "Please select the department you want the role be added to",
+                    choices: addInDepartment,
+                }
+            ]).then((answer) => {
+                connection.query(
+                    'INSERT INTO roles SET ?', 
+                        {
+                            title: answer.role,
+                            salary: answer.salary,
+                            department_id: answer.department,
+                        },
+                    (err, res) => {
+                        if (err) throw err;
+                        console.log(`${res.affectedRows} role added!\n`);
+                        inquirer.prompt([{
+                            type: "list",
+                            name: "choices",
+                            message: "Would you like to go back to the main menu or exit?",
+                            choices: [
+                                "Main Menu",
+                                "Exit",
+                            ]
+                        }]).then(data => {
+                            switch (data.choices) {
+                                case "Main Menu":
+                                    start();
+                                    break;
+                                case "Exit":
+                                    connection.end();
+                                    break;
+                            }
+                        })
+                    }
+                )
+            })
+    })
 };
 
 const removeRoles = () => {
-
+    connection.query("SELECT * FROM roles", (err, roles) => {
+        if (err) throw err;
+        let removeRoles = roles.map((role) => ({
+            name: role.title,
+            value: role.id,
+        }));
+        inquirer
+            .prompt([{
+                name: 'remove',
+                type: 'list',
+                message: "Which role would you like to remove?",
+                choices: removeRoles,
+            }, ]).then((answer) => {
+                connection.query("DELETE FROM roles WHERE ?", {
+                        id: answer.remove,
+                    },
+                    (err, res) => {
+                        if (err) throw err;
+                        console.log(`${res.affectedRows} role deleted!\n`);
+                        inquirer.prompt([{
+                            type: "list",
+                            name: "choices",
+                            message: "Would you like to go back to the main menu or exit?",
+                            choices: [
+                                "Main Menu",
+                                "Exit",
+                            ]
+                        }]).then(data => {
+                            switch (data.choices) {
+                                case "Main Menu":
+                                    start();
+                                    break;
+                                case "Exit":
+                                    connection.end();
+                                    break;
+                            }
+                        })
+                    })
+            })
+    })
 };
-
 
 connection.connect((err) => {
     if (err) throw err;
