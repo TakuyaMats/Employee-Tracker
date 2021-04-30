@@ -4,9 +4,6 @@ const cTable = require('console.table');
 const chalk = require('chalk');
 const clear = require('clear');
 const figlet = require('figlet');
-let roles = require('./lib/role');
-let managers = require('./lib/manager');
-let department = require('./lib/department');
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -200,83 +197,89 @@ const viewAllManager = () => {
 };
 
 const addEmployee = () => {
-    let newRoles = roles.map((role) => ({
-        name: role.role,
-        value: role.roleId
-    }));
-    let newManager = managers.map((managers) => ({
-        name: managers.name,
-        value: managers.managerId
-    }));
-    inquirer
-        .prompt([{
-                name: 'firstName',
-                type: 'input',
-                message: "What is the employee's first name?",
-                validate: answer => {
-                    if (answer !== "") {
-                        return true;
-                    } else {
-                        return "Please enter at least one Character.";
-                    }
-                }
-            },
-            {
-                name: 'lastName',
-                type: 'input',
-                message: "What is the employee's last name?",
-                validate: answer => {
-                    if (answer !== "") {
-                        return true;
-                    } else {
-                        return "Please enter at least one Character.";
-                    }
-                }
-            },
-            {
-                name: 'role',
-                type: 'list',
-                message: "What is the employee's role?",
-                choices: newRoles,
-            },
-            {
-                name: 'manager',
-                type: 'list',
-                message: "Who is the employee's manager?",
-                choices: newManager,
-            }
-        ]).then((answer) => {
-            connection.query(
-                'INSERT INTO employee SET ?', {
-                    first_name: answer.firstName,
-                    last_name: answer.lastName,
-                    role_id: answer.role,
-                    manager_id: answer.manager,
-                },
-                (err, res) => {
-                    if (err) throw err;
-                    console.log(`${res.affectedRows} employee added!\n`);
-                    inquirer.prompt([{
-                        type: "list",
-                        name: "choices",
-                        message: "Would you like to go back to the main menu or exit?",
-                        choices: [
-                            "Main Menu",
-                            "Exit",
-                        ]
-                    }]).then(data => {
-                        switch (data.choices) {
-                            case "Main Menu":
-                                start();
-                                break;
-                            case "Exit":
-                                connection.end();
-                                break;
+    connection.query("SELECT * FROM roles", (err, roles) => {
+        if (err) throw err;
+        let newRoles = roles.map((role) => ({
+            name: role.title,
+            value: role.id,
+        }));
+        connection.query("SELECT * FROM employee", (err, managers) => {
+            if (err) throw err;
+            let newManager = managers.map((manager) => ({
+                name: `${manager.first_name} ${manager.last_name}`,
+                value: manager.id,
+            }));
+            inquirer
+                .prompt([{
+                        name: 'firstName',
+                        type: 'input',
+                        message: "What is the employee's first name?",
+                        validate: answer => {
+                            if (answer !== "") {
+                                return true;
+                            } else {
+                                return "Please enter at least one Character.";
+                            }
                         }
-                    })
-                }
-            )
+                    },
+                    {
+                        name: 'lastName',
+                        type: 'input',
+                        message: "What is the employee's last name?",
+                        validate: answer => {
+                            if (answer !== "") {
+                                return true;
+                            } else {
+                                return "Please enter at least one Character.";
+                            }
+                        }
+                    },
+                    {
+                        name: 'role',
+                        type: 'list',
+                        message: "What is the employee's role?",
+                        choices: newRoles,
+                    },
+                    {
+                        name: 'manager',
+                        type: 'list',
+                        message: "Who is the employee's manager?",
+                        choices: newManager,
+                    }
+                ]).then((answer) => {
+                    connection.query(
+                        'INSERT INTO employee SET ?', {
+                            first_name: answer.firstName,
+                            last_name: answer.lastName,
+                            role_id: answer.role,
+                            manager_id: answer.manager,
+                        },
+                        (err, res) => {
+                            if (err) throw err;
+                            console.log(`${res.affectedRows} employee added!\n`);
+                            inquirer.prompt([{
+                                type: "list",
+                                name: "choices",
+                                message: "Would you like to go back to the main menu or exit?",
+                                choices: [
+                                    "Main Menu",
+                                    "Exit",
+                                ]
+                            }]).then(data => {
+                                switch (data.choices) {
+                                    case "Main Menu":
+                                        start();
+                                        break;
+                                    case "Exit":
+                                        connection.end();
+                                        break;
+                                }
+                            })
+                        }
+                    )
+                })
         })
+    })
 };
 
 const removeEmployee = () => {
@@ -391,55 +394,58 @@ const updateEmployeeManager = () => {
             name: `${employee.first_name} ${employee.last_name}`,
             value: employee.id,
         }));
-        let newManager = managers.map((managers) => ({
-            name: managers.name,
-            value: managers.managerId
-        }));
-        inquirer
-            .prompt([{
-                    name: 'employee',
-                    type: 'list',
-                    message: "Which employee would you like to assign a new manager to?",
-                    choices: updateEmployee,
-                },
-                {
-                    name: 'manager',
-                    type: 'list',
-                    message: "Which manager would you like to assign your employee to?",
-                    choices: newManager,
-                },
-            ]).then((answer) => {
-                connection.query("UPDATE employee SET ? WHERE ?",
-                    [{
-                            manager_id: answer.manager,
-                        },
-                        {
-                            id: answer.employee,
-                        },
-                    ],
-                    (err, res) => {
-                        if (err) throw err;
-                        console.log(`${res.affectedRows} employee manager updated!\n`);
-                        inquirer.prompt([{
-                            type: "list",
-                            name: "choices",
-                            message: "Would you like to go back to the main menu or exit?",
-                            choices: [
-                                "Main Menu",
-                                "Exit",
-                            ]
-                        }]).then(data => {
-                            switch (data.choices) {
-                                case "Main Menu":
-                                    start();
-                                    break;
-                                case "Exit":
-                                    connection.end();
-                                    break;
-                            }
+        connection.query("SELECT * FROM employee", (err, managers) => {
+            if (err) throw err;
+            let newManager = managers.map((manager) => ({
+                name: `${manager.first_name} ${manager.last_name}`,
+                value: manager.id,
+            }));
+            inquirer
+                .prompt([{
+                        name: 'employee',
+                        type: 'list',
+                        message: "Which employee would you like to assign a new manager to?",
+                        choices: updateEmployee,
+                    },
+                    {
+                        name: 'manager',
+                        type: 'list',
+                        message: "Which manager would you like to assign your employee to?",
+                        choices: newManager,
+                    },
+                ]).then((answer) => {
+                    connection.query("UPDATE employee SET ? WHERE ?",
+                        [{
+                                manager_id: answer.manager,
+                            },
+                            {
+                                id: answer.employee,
+                            },
+                        ],
+                        (err, res) => {
+                            if (err) throw err;
+                            console.log(`${res.affectedRows} employee manager updated!\n`);
+                            inquirer.prompt([{
+                                type: "list",
+                                name: "choices",
+                                message: "Would you like to go back to the main menu or exit?",
+                                choices: [
+                                    "Main Menu",
+                                    "Exit",
+                                ]
+                            }]).then(data => {
+                                switch (data.choices) {
+                                    case "Main Menu":
+                                        start();
+                                        break;
+                                    case "Exit":
+                                        connection.end();
+                                        break;
+                                }
+                            })
                         })
-                    })
-            })
+                })
+        })
     })
 };
 
@@ -496,12 +502,11 @@ const addRoles = () => {
                 }
             ]).then((answer) => {
                 connection.query(
-                    'INSERT INTO roles SET ?', 
-                        {
-                            title: answer.role,
-                            salary: answer.salary,
-                            department_id: answer.department,
-                        },
+                    'INSERT INTO roles SET ?', {
+                        title: answer.role,
+                        salary: answer.salary,
+                        department_id: answer.department,
+                    },
                     (err, res) => {
                         if (err) throw err;
                         console.log(`${res.affectedRows} role added!\n`);
