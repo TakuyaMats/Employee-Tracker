@@ -6,6 +6,7 @@ const clear = require('clear');
 const figlet = require('figlet');
 let roles = require('./lib/role');
 let managers = require('./lib/manager');
+let department = require('./lib/department');
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -85,7 +86,6 @@ const start = () => {
 
 const viewAll = () => {
     console.log("------------------------------------------");
-    console.log(roles);
     connection.query(`SELECT 
     e.id,
     CONCAT(e.first_name, ' ', e.last_name) AS 'Employee Name',
@@ -323,16 +323,100 @@ const removeEmployee = () => {
     })
 };
 
+// Not Working, giving me a duplicate error.
 const updateEmployeeRole = () => {
+    connection.query("SELECT * FROM roles", (err, roles) => {
+        if (err) throw err;
+        let updateTitle = roles.map((role) => ({
+            name: role.title,
+            value: role.id
+        }));
+        connection.query("SELECT * FROM employee", (err, employees) => {
+            if (err) throw err;
+            let updateEmployee = employees.map((employee) => ({
+                name: `${employee.first_name} ${employee.last_name}`,
+                value: employee.id,
+            }));
+            inquirer
+                .prompt([{
+                        name: 'update',
+                        type: 'list',
+                        message: "Which employee would you like to update?",
+                        choices: updateEmployee,
+                    },
+                    {
+                        name: 'title',
+                        type: 'list',
+                        message: "What would you like to change your employee title to?",
+                        choices: updateTitle,
+                    },
+                ]).then((answer) => {
+                    connection.query("UPDATE employee SET ? WHERE ?",
+                            [{
+                                id: answer.update,
+                            },
+                            {
+                                role_id: answer.title,
+                            }
+                        ],
+                        (err, res) => {
+                            if (err) throw err;
+                            console.log(`${res.affectedRows} employee updated!\n`);
+                            inquirer.prompt([{
+                                type: "list",
+                                name: "choices",
+                                message: "Would you like to go back to the main menu or exit?",
+                                choices: [
+                                    "Main Menu",
+                                    "Exit",
+                                ]
+                            }]).then(data => {
+                                switch (data.choices) {
+                                    case "Main Menu":
+                                        start();
+                                        break;
+                                    case "Exit":
+                                        connection.end();
+                                        break;
+                                }
+                            })
+                        })
+                })
+        })
+    })
+}
 
-};
+
 
 const updateEmployeeManager = () => {
 
 };
 
 const viewAllRoles = () => {
-
+    console.log("------------------------------------------");
+    connection.query(`SELECT roles.id, roles.title, roles.salary FROM roles`, (err, res) => {
+        if (err) throw err;
+        let data = res
+        console.table(data);
+        inquirer.prompt([{
+            type: "list",
+            name: "choices",
+            message: "Would you like to go back to the main menu or exit?",
+            choices: [
+                "Main Menu",
+                "Exit",
+            ]
+        }]).then(data => {
+            switch (data.choices) {
+                case "Main Menu":
+                    start();
+                    break;
+                case "Exit":
+                    connection.end();
+                    break;
+            }
+        })
+    })
 };
 
 const addRoles = () => {
