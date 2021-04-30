@@ -197,6 +197,7 @@ const viewAllManager = () => {
 };
 
 const addEmployee = () => {
+    console.log("------------------------------------------");
     connection.query("SELECT * FROM roles", (err, roles) => {
         if (err) throw err;
         let newRoles = roles.map((role) => ({
@@ -283,6 +284,7 @@ const addEmployee = () => {
 };
 
 const removeEmployee = () => {
+    console.log("------------------------------------------");
     connection.query("SELECT * FROM employee", (err, employees) => {
         if (err) throw err;
         let removeEmployee = employees.map((employee) => ({
@@ -326,6 +328,7 @@ const removeEmployee = () => {
 };
 
 const updateEmployeeRole = () => {
+    console.log("------------------------------------------");
     connection.query("SELECT * FROM roles", (err, roles) => {
         if (err) throw err;
         let updateTitle = roles.map((role) => ({
@@ -388,6 +391,7 @@ const updateEmployeeRole = () => {
 }
 
 const updateEmployeeManager = () => {
+    console.log("------------------------------------------");
     connection.query("SELECT * FROM employee", (err, employees) => {
         if (err) throw err;
         let updateEmployee = employees.map((employee) => ({
@@ -477,11 +481,12 @@ const viewAllRoles = () => {
 };
 
 const addRoles = () => {
+    console.log("------------------------------------------");
     connection.query("SELECT * FROM department", (err, departments) => {
         if (err) throw err;
         let addInDepartment = departments.map((department) => ({
             name: department.name,
-            value: department.departmentId,
+            value: department.id,
         }));
         inquirer
             .prompt([{
@@ -535,6 +540,7 @@ const addRoles = () => {
 };
 
 const removeRoles = () => {
+    console.log("------------------------------------------");
     connection.query("SELECT * FROM roles", (err, roles) => {
         if (err) throw err;
         let removeRoles = roles.map((role) => ({
