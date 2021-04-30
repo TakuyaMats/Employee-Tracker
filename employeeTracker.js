@@ -323,13 +323,12 @@ const removeEmployee = () => {
     })
 };
 
-// Not Working, giving me a duplicate error.
 const updateEmployeeRole = () => {
     connection.query("SELECT * FROM roles", (err, roles) => {
         if (err) throw err;
         let updateTitle = roles.map((role) => ({
             name: role.title,
-            value: role.id
+            value: role.id,
         }));
         connection.query("SELECT * FROM employee", (err, employees) => {
             if (err) throw err;
@@ -352,12 +351,12 @@ const updateEmployeeRole = () => {
                     },
                 ]).then((answer) => {
                     connection.query("UPDATE employee SET ? WHERE ?",
-                            [{
-                                id: answer.update,
+                        [{
+                                role_id: answer.title,
                             },
                             {
-                                role_id: answer.title,
-                            }
+                                id: answer.update,
+                            },
                         ],
                         (err, res) => {
                             if (err) throw err;
@@ -389,7 +388,63 @@ const updateEmployeeRole = () => {
 
 
 const updateEmployeeManager = () => {
-
+    connection.query("SELECT * FROM employee", (err, employees) => {
+        if (err) throw err;
+        let updateEmployee = employees.map((employee) => ({
+            name: `${employee.first_name} ${employee.last_name}`,
+            value: employee.id,
+        }));
+        let newManager = managers.map((managers) => ({
+            name: managers.name,
+            value: managers.managerId
+        }));
+        inquirer
+            .prompt([{
+                    name: 'employee',
+                    type: 'list',
+                    message: "Which employee would you like to assign a new manager to?",
+                    choices: updateEmployee,
+                },
+                {
+                    name: 'manager',
+                    type: 'list',
+                    message: "Which manager would you like to assign your employee to?",
+                    choices: newManager,
+                },
+            ]).then((answer) => {
+                connection.query("UPDATE employee SET ? WHERE ?",
+                        [
+                        {
+                            manager_id: answer.manager,
+                        },
+                        {
+                            id: answer.employee,
+                        },
+                    ],
+                    (err, res) => {
+                        if (err) throw err;
+                        console.log(`${res.affectedRows} employee updated!\n`);
+                        inquirer.prompt([{
+                            type: "list",
+                            name: "choices",
+                            message: "Would you like to go back to the main menu or exit?",
+                            choices: [
+                                "Main Menu",
+                                "Exit",
+                            ]
+                        }]).then(data => {
+                            switch (data.choices) {
+                                case "Main Menu":
+                                    start();
+                                    break;
+                                case "Exit":
+                                    connection.end();
+                                    break;
+                            }
+                        })
+                    })
+            })
+    })
 };
 
 const viewAllRoles = () => {
