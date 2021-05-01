@@ -22,9 +22,9 @@ So that I can organize and plan my business
 
 ## 2. Site Links & Video Demonstration
 
-![Video-Demo](./asset/employeeTracker.gif "Video")
+![Video-Demo](./img-video-demonstration/employeeTracker.gif "Video")
 
-![Image-Demo](./asset/employeeTracker.png "Image")
+![Image-Demo](./img-video-demonstration/employeeTracker.png "Image")
 
 [github repository site] https://github.com/TakuyaMats/Employee-Tracker.git
 
